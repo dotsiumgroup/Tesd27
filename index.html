@@ -1,38 +1,689 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>DAKHIL-27 FSPC — Registration</title>
+
+<style>
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+
+body{
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:18px;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Arial,
+    "Noto Sans Bengali",
+    sans-serif;
+  background:
+    radial-gradient(circle at top,#243b80,#10172f 55%,#070b18);
+  color:#fff;
+}
+
+.card{
+  width:min(100%,430px);
+  padding:25px 20px;
+  border-radius:28px;
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.12);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+  box-shadow:0 25px 70px rgba(0,0,0,.45);
+}
+
+.logo{
+  width:70px;
+  height:70px;
+  margin:0 auto 12px;
+  border-radius:20px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:linear-gradient(135deg,#ffd700,#ff9d00);
+  color:#11182d;
+  font-size:27px;
+  font-weight:900;
+  box-shadow:0 10px 30px rgba(255,193,7,.25);
+}
+
+h1{
+  text-align:center;
+  font-size:23px;
+  margin-bottom:6px;
+}
+
+.subtitle{
+  text-align:center;
+  color:#b8c1dc;
+  font-size:13px;
+  line-height:1.5;
+  margin-bottom:20px;
+}
+
+.status{
+  padding:12px 14px;
+  border-radius:14px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.08);
+  margin-bottom:16px;
+  font-size:13px;
+  line-height:1.5;
+}
+
+.status.success{
+  color:#8ff0b0;
+  border-color:rgba(46,213,115,.3);
+  background:rgba(46,213,115,.08);
+}
+
+.status.error{
+  color:#ff9d9d;
+  border-color:rgba(255,80,80,.3);
+  background:rgba(255,80,80,.08);
+}
+
+label{
+  display:block;
+  color:#b9c2dc;
+  font-size:13px;
+  margin-bottom:6px;
+}
+
+.field{
+  margin-bottom:14px;
+}
+
+input{
+  width:100%;
+  padding:13px 14px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.12);
+  outline:none;
+  background:rgba(255,255,255,.07);
+  color:#fff;
+  font-size:15px;
+}
+
+input:focus{
+  border-color:#7c6cff;
+  box-shadow:0 0 0 3px rgba(124,108,255,.13);
+}
+
+input::placeholder{
+  color:#69728f;
+}
+
+button{
+  width:100%;
+  border:0;
+  border-radius:15px;
+  padding:14px;
+  margin-top:5px;
+  background:linear-gradient(135deg,#ffd700,#ff9d00);
+  color:#171b2c;
+  font-size:16px;
+  font-weight:800;
+  cursor:pointer;
+  box-shadow:0 8px 25px rgba(255,193,7,.22);
+}
+
+button:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
+
+.info{
+  text-align:center;
+  color:#7f89a8;
+  font-size:11px;
+  line-height:1.5;
+  margin-top:13px;
+}
+
+.spinner{
+  display:inline-block;
+  width:15px;
+  height:15px;
+  border:2px solid rgba(0,0,0,.2);
+  border-top-color:#11182d;
+  border-radius:50%;
+  animation:spin .7s linear infinite;
+  vertical-align:-3px;
+  margin-right:7px;
+}
+
+@keyframes spin{
+  to{transform:rotate(360deg)}
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+
+  <div class="logo">FSPC</div>
+
+  <h1>DAKHIL-27 FSPC</h1>
+
+  <p class="subtitle">
+    নতুন শিক্ষার্থী Registration
+  </p>
+
+  <div class="status" id="status">
+    🔔 Registration-এর জন্য প্রস্তুত।
+  </div>
+
+  <div class="field">
+    <label>শিক্ষার্থীর নাম</label>
+    <input
+      id="name"
+      type="text"
+      placeholder="আপনার পূর্ণ নাম"
+      autocomplete="name">
+  </div>
+
+  <div class="field">
+    <label>রোল</label>
+    <input
+      id="roll"
+      type="text"
+      placeholder="আপনার রোল">
+  </div>
+
+  <div class="field">
+    <label>Student ID</label>
+    <input
+      id="studentId"
+      type="text"
+      placeholder="Student ID"
+      readonly>
+  </div>
+
+  <button id="registerBtn">
+    🎓 Registration করুন
+  </button>
+
+  <div class="info">
+    Registration সম্পন্ন হলে আপনার OneSignal Subscription
+    তথ্য Google Sheet-এ সংরক্ষিত হবে।
+  </div>
+
+</div>
+
+
 <script>
-window.addEventListener("load", () => {
 
-  setTimeout(() => {
+/* =========================================================
+   CONFIG
+   ========================================================= */
 
-    const result = {
-      OneSignal: typeof window.OneSignal,
-      plugins: typeof window.plugins,
-      cordova: typeof window.cordova,
-      OneSignalCordova: typeof window.OneSignalCordova,
-      onesignal: typeof window.onesignal,
-      OneSignalIamApi: typeof window.OneSignalIamApi
-    };
+const API_URL =
+'https://script.google.com/macros/s/AKfycbwTKo_sTW2pndIbYVMDBV-0CNwzZ5B244qI9dBcNjl8K8TMnL3Zce0jzekh8ZUXZQ5aUw/exec';
 
-    document.body.insertAdjacentHTML(
-      "beforeend",
-      `<pre style="
-        position:fixed;
-        left:10px;
-        right:10px;
-        bottom:10px;
-        max-height:250px;
-        overflow:auto;
-        background:#000;
-        color:#0f0;
-        padding:15px;
-        z-index:99999;
-        font-size:13px;
-        white-space:pre-wrap;
-      ">${JSON.stringify(result, null, 2)}</pre>`
+
+/* =========================================================
+   ELEMENTS
+   ========================================================= */
+
+const nameInput =
+document.getElementById('name');
+
+const rollInput =
+document.getElementById('roll');
+
+const studentIdInput =
+document.getElementById('studentId');
+
+const registerBtn =
+document.getElementById('registerBtn');
+
+const statusBox =
+document.getElementById('status');
+
+
+/* =========================================================
+   GENERATE STUDENT ID
+   ========================================================= */
+
+function generateStudentId(){
+
+  const random =
+    Math.random()
+      .toString(36)
+      .substring(2,8)
+      .toUpperCase();
+
+  return 'FSPC-' + random;
+}
+
+
+studentIdInput.value =
+generateStudentId();
+
+
+/* =========================================================
+   STATUS
+   ========================================================= */
+
+function setStatus(
+  text,
+  type=''
+){
+
+  statusBox.textContent =
+    text;
+
+  statusBox.className =
+    'status ' + type;
+}
+
+
+/* =========================================================
+   SAFE JSON FETCH
+   ========================================================= */
+
+async function sendToServer(payload){
+
+  const response =
+    await fetch(
+      API_URL,
+      {
+        method:'POST',
+
+        headers:{
+          'Content-Type':
+            'text/plain;charset=utf-8'
+        },
+
+        body:
+          JSON.stringify(payload)
+      }
     );
 
-    console.log(result);
+  const text =
+    await response.text();
 
-  }, 5000);
+  try{
 
-});
+    return JSON.parse(text);
+
+  }catch(e){
+
+    throw new Error(
+      'Server থেকে সঠিক response পাওয়া যায়নি।'
+    );
+  }
+}
+
+
+/* =========================================================
+   GET ONESIGNAL INFORMATION
+   =========================================================
+   
+   Median / Native OneSignal implementation অনুযায়ী
+   বিভিন্ন bridge থাকতে পারে।
+
+   নিচে সম্ভাব্য bridge চেক করা হচ্ছে।
+   ========================================================= */
+
+async function getOneSignalInfo(){
+
+  let result = {
+    oneSignalId:'',
+    subscriptionId:''
+  };
+
+
+  /* -------------------------------------------------------
+     1. OneSignal Web SDK
+     ------------------------------------------------------- */
+
+  try{
+
+    if(
+      window.OneSignal &&
+      window.OneSignal.User
+    ){
+
+      const user =
+        window.OneSignal.User;
+
+      const subscription =
+        user.PushSubscription;
+
+      if(subscription){
+
+        if(subscription.id){
+
+          result.subscriptionId =
+            String(subscription.id);
+        }
+
+        if(user.onesignalId){
+
+          result.oneSignalId =
+            String(user.onesignalId);
+        }
+      }
+    }
+
+  }catch(e){}
+
+
+  /* -------------------------------------------------------
+     2. Old OneSignal Web SDK
+     ------------------------------------------------------- */
+
+  if(!result.subscriptionId){
+
+    try{
+
+      if(
+        window.OneSignal &&
+        typeof window.OneSignal.getUserId ===
+        'function'
+      ){
+
+        const id =
+          await window.OneSignal.getUserId();
+
+        if(id){
+
+          result.oneSignalId =
+            String(id);
+        }
+      }
+
+    }catch(e){}
+  }
+
+
+  /* -------------------------------------------------------
+     3. Native/Cordova style bridge
+     ------------------------------------------------------- */
+
+  try{
+
+    const candidates = [
+
+      window.plugins?.OneSignal,
+
+      window.cordova?.plugins?.OneSignal,
+
+      window.OneSignalCordova
+
+    ];
+
+
+    for(
+      const plugin of candidates
+    ){
+
+      if(!plugin) continue;
+
+
+      if(
+        typeof plugin.getDeviceState ===
+        'function'
+      ){
+
+        try{
+
+          const state =
+            await new Promise(
+              resolve => {
+
+                plugin.getDeviceState(
+                  function(data){
+                    resolve(data || {});
+                  }
+                );
+
+              }
+            );
+
+
+          if(state){
+
+            result.oneSignalId =
+              result.oneSignalId ||
+              state.userId ||
+              state.onesignalId ||
+              '';
+
+            result.subscriptionId =
+              result.subscriptionId ||
+              state.pushToken ||
+              state.subscriptionId ||
+              '';
+
+          }
+
+        }catch(e){}
+      }
+
+
+      if(
+        typeof plugin.getUserId ===
+        'function'
+      ){
+
+        try{
+
+          const id =
+            await new Promise(
+              resolve => {
+
+                plugin.getUserId(
+                  function(value){
+                    resolve(value || '');
+                  }
+                );
+
+              }
+            );
+
+
+          if(id){
+
+            result.oneSignalId =
+              result.oneSignalId ||
+              String(id);
+          }
+
+        }catch(e){}
+      }
+
+    }
+
+  }catch(e){}
+
+
+  return result;
+}
+
+
+/* =========================================================
+   REGISTER
+   ========================================================= */
+
+registerBtn.addEventListener(
+  'click',
+  async function(){
+
+    const name =
+      nameInput.value.trim();
+
+    const roll =
+      rollInput.value.trim();
+
+    const studentId =
+      studentIdInput.value.trim();
+
+
+    if(!name){
+
+      setStatus(
+        '⚠️ আপনার নাম লিখুন।',
+        'error'
+      );
+
+      nameInput.focus();
+
+      return;
+    }
+
+
+    if(!roll){
+
+      setStatus(
+        '⚠️ আপনার রোল লিখুন।',
+        'error'
+      );
+
+      rollInput.focus();
+
+      return;
+    }
+
+
+    registerBtn.disabled =
+      true;
+
+    registerBtn.innerHTML =
+      '<span class="spinner"></span> Registration হচ্ছে...';
+
+
+    setStatus(
+      '🔍 Notification subscription খোঁজা হচ্ছে...'
+    );
+
+
+    try{
+
+      /* -----------------------------------------------------
+         OneSignal information
+         ----------------------------------------------------- */
+
+      const oneSignal =
+        await getOneSignalInfo();
+
+
+      console.log(
+        'OneSignal:',
+        oneSignal
+      );
+
+
+      setStatus(
+        '📤 Registration তথ্য পাঠানো হচ্ছে...'
+      );
+
+
+      /* -----------------------------------------------------
+         Send registration
+         ----------------------------------------------------- */
+
+      const result =
+        await sendToServer({
+
+          action:
+            'register',
+
+          studentId:
+            studentId,
+
+          name:
+            name,
+
+          roll:
+            roll,
+
+          batch:
+            'DAKHIL-27',
+
+          oneSignalId:
+            oneSignal.oneSignalId || '',
+
+          subscriptionId:
+            oneSignal.subscriptionId || ''
+
+        });
+
+
+      console.log(
+        'Server:',
+        result
+      );
+
+
+      if(result.ok){
+
+        setStatus(
+          result.newStudent
+            ? '🎉 Registration সফল হয়েছে!'
+            : '✅ আপনার তথ্য ইতিমধ্যে Registration করা আছে।',
+          'success'
+        );
+
+
+        registerBtn.innerHTML =
+          '✅ Registration সম্পন্ন';
+
+
+        /*
+         * নতুন student হলে welcome notification
+         * server থেকে পাঠানো হবে।
+         */
+
+      }else{
+
+        throw new Error(
+          result.error ||
+          'Registration ব্যর্থ হয়েছে।'
+        );
+      }
+
+
+    }catch(error){
+
+      console.error(
+        error
+      );
+
+
+      setStatus(
+        '❌ ' +
+        (error.message ||
+        'Registration ব্যর্থ হয়েছে।'),
+        'error'
+      );
+
+
+      registerBtn.disabled =
+        false;
+
+      registerBtn.innerHTML =
+        '🎓 আবার Registration করুন';
+
+    }
+
+  }
+);
+
 </script>
+
+</body>
+</html>
