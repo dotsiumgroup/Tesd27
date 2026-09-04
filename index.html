@@ -7,14 +7,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla:wght@400;700&family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    if (typeof fetchData === 'function' && !window._bomPrefetchStarted) {
-      window._bomPrefetchStarted = true;
-      window._bomPrefetchPromise = fetchData().catch(function() { return []; });
-    }
-  });
-</script>
+  
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     /* Preloader Styles */
@@ -2428,6 +2421,20 @@
       text-align: center;
       font-size: 0.9rem;
     }
+    
+    .sync-hint {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #25D366;
+  margin-top: 16px;
+  margin-bottom: -8px;
+  animation: syncHintBounce 1.4s ease-in-out infinite;
+  text-align: center;
+}
+@keyframes syncHintBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
 
     .notice-bar {
       overflow: hidden;
@@ -3155,7 +3162,7 @@
 #video-player-page .note-textarea-wrap { display: none; flex-direction: column; gap: 12px; }
 #video-player-page .note-textarea-wrap.active { display: flex; }
 #video-player-page .note-textarea { width: 100%; min-height: 110px; max-height: 220px; padding: 14px 16px; border: 2px solid rgba(240,180,41,0.25); border-radius: 12px; font-size: 15px; font-family: 'Poppins', sans-serif; line-height: 1.7; resize: vertical; transition: border-color 0.25s ease, box-shadow 0.25s ease; background: rgba(11,19,48,0.5); color: #f5f7ff; }
-#video-player-page .note-textarea:focus { outline: none; border-color: #f7971e; box-shadow: 0 0 0 4px rgba(247,151,30,0.15); background: #ffffff; }
+#video-player-page .note-textarea:focus { outline: none; border-color: #f7971e; box-shadow: 0 0 0 4px rgba(247,151,30,0.15); }
 #video-player-page .note-textarea::-webkit-scrollbar { width: 5px; }
 #video-player-page .note-textarea::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 10px; }
 #video-player-page .note-textarea::-webkit-scrollbar-thumb { background: rgba(240,180,41,0.4); border-radius: 10px; }
@@ -4143,11 +4150,21 @@ body.fullscreen-active { overflow: hidden !important; touch-action: none !import
   <!-- Loading Overlay -->
   <div id="loading-overlay" class="hidden">
     <div class="loading-box">
-      <div class="loading-spinner"></div>
-      <h2 class="loading-title bangla-font">ডাটা লোড হচ্ছে<span class="loading-dots"></span></h2>
-      <p class="loading-message bangla-font">ডাটা লোড সম্পন্ন হওয়া পর্যন্ত অপেক্ষা করুন<br>ইন্টারনেট স্পিড ঠিক রাখুন...</p>
-      <div class="loading-progress">
-        <div class="loading-progress-bar" id="loading-progress-bar"></div>
+      <div id="loading-normal-content">
+        <div class="loading-spinner"></div>
+        <h2 class="loading-title bangla-font">ডাটা লোড হচ্ছে<span class="loading-dots"></span></h2>
+        <p class="loading-message bangla-font">ডাটা লোড সম্পন্ন হওয়া পর্যন্ত অপেক্ষা করুন<br>ইন্টারনেট স্পিড ঠিক রাখুন...</p>
+        <div class="loading-progress">
+          <div class="loading-progress-bar" id="loading-progress-bar"></div>
+        </div>
+      </div>
+      <div id="loading-failure-content" style="display:none;">
+        <i class="fas fa-exclamation-triangle" style="font-size:48px; color:#ff6b81; margin-bottom:16px; display:block;"></i>
+        <h2 class="bangla-font" style="color:#ff6b81; font-size:1.4rem; font-weight:700; margin-bottom:10px;">ডেটা লোড ব্যর্থ হয়েছে!</h2>
+        <p class="loading-message bangla-font">তথ্য লোড করা সম্ভব হয়নি। আপনার ইন্টারনেট সংযোগ পরীক্ষা করে নিচের বাটনে চাপ দিয়ে আবার চেষ্টা করুন।</p>
+        <button id="loading-retry-btn" class="bangla-font" style="margin-top:16px; padding:12px 30px; border:none; border-radius:50px; background: linear-gradient(135deg, #ff4757, #ff6b81); color:#fff; font-weight:700; font-size:1rem; cursor:pointer; box-shadow:0 6px 18px rgba(255,71,87,0.4);">
+          <i class="fas fa-redo"></i> পুনরায় চেষ্টা করুন
+        </button>
       </div>
     </div>
   </div>
@@ -4205,40 +4222,54 @@ body.fullscreen-active { overflow: hidden !important; touch-action: none !import
   .bomreg-server-note { background:#e7f3ff; border-radius:12px; padding:12px 14px; margin-bottom:20px; font-size:0.76rem; color:#084298; line-height:1.7; text-align:left; }
 </style>
 
+<!-- রেজিস্ট্রেশন সফল হলে -->
 <div class="id-success bangla-font" id="id-success-screen">
-      <h2 class="bangla-font">রেজিস্ট্রেশন সম্পন্ন হয়েছে!</h2>
-      <p class="bangla-font">আপনার BOM Student ID তৈরি হয়েছে। পরবর্তীতে লগইন করতে এই আইডিটি প্রয়োজন হবে — অবশ্যই সংরক্ষণ করুন।</p>
-      <div class="id-card">
-        <div class="id-label">BOM STUDENT ID</div>
-        <div class="id-value" id="generated-id-text">--------</div>
-        <button class="copy-btn" id="copy-id-btn" type="button">কপি করুন</button>
-      </div>
-      <button class="login-btn bangla-font" id="continue-to-main-btn">মেইন পেইজে যান</button>
-      <button class="login-btn bangla-font" id="sync-reload-btn-register" style="display:none; margin-top:10px; background: linear-gradient(135deg, #25D366, #128C7E);">🔄 রিলোড করুন</button>
-    </div>
-    <!-- শিক্ষার্থী লগইন সফল হলে এই মডেল দেখাবে -->
-    <div class="id-success bangla-font" id="login-success-screen" style="display:none;">
-      <h2 class="bangla-font">লগইন সফল হয়েছে!</h2>
-      <p class="bangla-font">আপনি সফলভাবে আপনার অ্যাকাউন্টে প্রবেশ করেছেন।</p>
-      <div class="id-card">
-        <div class="id-label">নাম</div>
-        <div class="id-value" id="login-success-name" style="font-size:1.1rem;">--------</div>
-      </div>
-      <button class="login-btn bangla-font" id="sync-reload-btn-login" style="display:none; background: linear-gradient(135deg, #25D366, #128C7E);">🔄 রিলোড করুন</button>
-      <button class="login-btn bangla-font" id="continue-after-login-btn" style="margin-top:10px;">মেইন পেইজে যান</button>
-    </div>
+  <h2 class="bangla-font">রেজিস্ট্রেশন সম্পন্ন হয়েছে!</h2>
+  <p class="bangla-font">আপনার BOM Student ID তৈরি হয়েছে। পরবর্তীতে লগইন করতে এই আইডিটি প্রয়োজন হবে — অবশ্যই সংরক্ষণ করুন।</p>
+  <div class="id-card">
+    <div class="id-label">BOM STUDENT ID</div>
+    <div class="id-value" id="generated-id-text">--------</div>
+    <button class="copy-btn" id="copy-id-btn" type="button">কপি করুন</button>
+  </div>
+  <div class="warning-message bangla-font">
+    ⚠️ আপনার স্টুডেন্ট আইডি, পাসওয়ার্ড ও অ্যাপের সিক্রেট পাসওয়ার্ড কখনো কারো সাথে শেয়ার করবেন না। শেয়ার করলে আপনার আইডি স্থায়ীভাবে ব্লক করে দেওয়া হবে।
+  </div>
+  <div class="sync-hint bangla-font">👇 এগিয়ে যেতে নিচের বাটনে ক্লিক করুন</div>
+  <button class="login-btn bangla-font" id="continue-to-main-btn">মেইন পেইজে যান</button>
+  <button class="login-btn bangla-font" id="sync-reload-btn-register" style="display:none; margin-top:10px; background: linear-gradient(135deg, #25D366, #128C7E);">🔄 রিলোড করুন</button>
+</div>
 
-    <!-- এডমিন লগইন সফল হলে এই মডেল দেখাবে -->
-    <div class="id-success bangla-font" id="admin-login-success-screen" style="display:none;">
-      <h2 class="bangla-font">লগইন সফল হয়েছে!</h2>
-      <p class="bangla-font">আপনি এডমিন/এডিটর হিসেবে সফলভাবে প্রবেশ করেছেন।</p>
-      <div class="id-card">
-        <div class="id-label">নাম</div>
-        <div class="id-value" id="admin-login-success-name" style="font-size:1.1rem;">--------</div>
-      </div>
-      <button class="login-btn bangla-font" id="sync-reload-btn-admin" style="display:none; background: linear-gradient(135deg, #25D366, #128C7E);">🔄 রিলোড করুন</button>
-      <button class="login-btn bangla-font" id="continue-after-admin-btn" style="margin-top:10px;">মেইন পেইজে যান</button>
-    </div>
+<!-- শিক্ষার্থী লগইন সফল হলে -->
+<div class="id-success bangla-font" id="login-success-screen" style="display:none;">
+  <h2 class="bangla-font">লগইন সম্পন্ন হয়েছে!</h2>
+  <p class="bangla-font">আপনি সফলভাবে আপনার BOM অ্যাকাউন্টে প্রবেশ করেছেন।</p>
+  <div class="id-card">
+    <div class="id-label">শিক্ষার্থীর নাম</div>
+    <div class="id-value" id="login-success-name">--------</div>
+  </div>
+  <div class="warning-message bangla-font">
+    ⚠️ আপনার স্টুডেন্ট আইডি, পাসওয়ার্ড ও অ্যাপের সিক্রেট পাসওয়ার্ড কখনো কারো সাথে শেয়ার করবেন না। শেয়ার করলে আপনার আইডি স্থায়ীভাবে ব্লক করে দেওয়া হবে।
+  </div>
+  <div class="sync-hint bangla-font">👇 এগিয়ে যেতে নিচের বাটনে ক্লিক করুন</div>
+  <button class="login-btn bangla-font" id="continue-after-login-btn">মেইন পেইজে যান</button>
+  <button class="login-btn bangla-font" id="sync-reload-btn-login" style="display:none; margin-top:10px; background: linear-gradient(135deg, #25D366, #128C7E);">🔄 রিলোড করুন</button>
+</div>
+
+<!-- এডমিন লগইন সফল হলে -->
+<div class="id-success bangla-font" id="admin-login-success-screen" style="display:none;">
+  <h2 class="bangla-font">লগইন সম্পন্ন হয়েছে!</h2>
+  <p class="bangla-font">আপনি এডমিন/এডিটর হিসেবে সফলভাবে প্রবেশ করেছেন।</p>
+  <div class="id-card">
+    <div class="id-label">নাম</div>
+    <div class="id-value" id="admin-login-success-name">--------</div>
+  </div>
+  <div class="warning-message bangla-font">
+    ⚠️ এডমিন প্যানেলের পাসওয়ার্ড কখনো কারো সাথে শেয়ার করবেন না। এটি অ্যাপের নিরাপত্তার জন্য অত্যন্ত গুরুত্বপূর্ণ।
+  </div>
+  <div class="sync-hint bangla-font">👇 এগিয়ে যেতে নিচের বাটনে ক্লিক করুন</div>
+  <button class="login-btn bangla-font" id="continue-after-admin-btn">মেইন পেইজে যান</button>
+  <button class="login-btn bangla-font" id="sync-reload-btn-admin" style="display:none; margin-top:10px; background: linear-gradient(135deg, #25D366, #128C7E);">🔄 রিলোড করুন</button>
+</div>
 
     <!-- লগইন / রেজিস্ট্রেশন ফর্ম -->
     <div id="auth-forms-wrap">
@@ -5147,7 +5178,7 @@ body.fullscreen-active { overflow: hidden !important; touch-action: none !import
                         <div class="note-actions" id="noteActions">
                             <button class="note-save-btn" id="noteSaveBtn"><i class="fas fa-save"></i> সংরক্ষণ করুন</button>
                             <button class="note-cancel-btn" id="noteCancelBtn">বাতিল</button>
-                            <button class="note-delete-btn" id="noteDeleteBtn"><i class="fas fa-trash-alt"></i> মুছুন</button>
+                            <button class="note-delete-btn" id="noteDeleteBtn"><i class="fas fa-trash-alt"></i> সব মুছুন</button>
                         </div>
                     </div>
                 </div>
@@ -5908,7 +5939,7 @@ body.fullscreen-active { overflow: hidden !important; touch-action: none !import
     
     // ============ ক্রস-সার্ভার সিঙ্ক সিস্টেম ============
 const CROSS_SERVER_SYNC_ENABLED = true; // false করলে পুরনো সিস্টেম, true করলে নতুন সিঙ্ক সিস্টেম
-const SYNC_HUB_URL = 'https://dotsiumgroup.github.io/rastv/';
+const SYNC_HUB_URL = 'https://dotsiumgroup.github.io/dakhil27link/';
 
 // সিঙ্ক করার মতো সব দরকারি তথ্য জড়ো করা (localStorage থেকে)
 function bomBuildSyncPayload() {
@@ -8414,6 +8445,24 @@ const documentsPage = $('#documents-page');
         return [];
       }
     }
+    
+    // পেজ লোড হওয়ার সাথে সাথেই ব্যাকগ্রাউন্ডে ক্লাসের তথ্য প্রি-লোড শুরু (নির্ভরযোগ্য ভার্সন)
+if (!window._bomPrefetchStarted) {
+  window._bomPrefetchStarted = true;
+  window._bomPrefetchDone = false;
+  window._bomPrefetchResult = null;
+  window._bomPrefetchPromise = fetchData()
+    .then(function(rows) {
+      window._bomPrefetchResult = rows;
+      window._bomPrefetchDone = (rows && rows.length > 0);
+      return rows;
+    })
+    .catch(function() {
+      window._bomPrefetchDone = false;
+      window._bomPrefetchResult = null;
+      return [];
+    });
+}
 
     function normalizeRows(rows) {
       try {
@@ -9126,25 +9175,31 @@ const dakhil27Submissions = response.data.filter(item =>
     }
 
     async function loadInitialData() {
-      const loadStartTime = Date.now();
-      const MIN_LOADING_MS = 1500;
       showLoadingOverlay();
+      document.getElementById('loading-normal-content').style.display = '';
+      document.getElementById('loading-failure-content').style.display = 'none';
       updateLoadingProgress(10);
       if (!checkLoginExpiry()) {
         logout();
         return;
       }
 
-      const role = getUserRole();
       let rowsPromise;
-      if (role === 'owner' || role === 'editor') {
-        rowsPromise = fetchData();
+  let alreadyPrefetched = false;
+
+  if (window._bomPrefetchDone && window._bomPrefetchResult) {
+        // প্রি-লোড আগেই সফলভাবে শেষ হয়ে গেছে, সরাসরি সেই ফলাফল ব্যবহার করা
+        alreadyPrefetched = true;
+        rowsPromise = Promise.resolve(window._bomPrefetchResult);
       } else if (window._bomPrefetchPromise) {
         updateLoadingProgress(60);
         rowsPromise = window._bomPrefetchPromise;
       } else {
         rowsPromise = fetchData();
       }
+
+      const loadStartTime = Date.now();
+      const MIN_LOADING_MS = alreadyPrefetched ? 1000 : 1500;
 
       const rows = await rowsPromise;
       updateLoadingProgress(95);
@@ -9166,13 +9221,33 @@ const dakhil27Submissions = response.data.filter(item =>
         setButtonVisibility();
 
         hideLoadingOverlay();
+        playTune('classLoadSuccess');
         updateLoadingProgress(0);
       } else {
-        hideLoadingOverlay();
-        showDataLoadFailedBanner();
+        // প্রি-লোড ব্যর্থ হয়ে থাকলে, পরের বার বাটনে চাপ দিলে যেন নতুন করে চেষ্টা হয়
+        window._bomPrefetchDone = false;
+        window._bomPrefetchResult = null;
+        window._bomPrefetchPromise = null;
+        showLoadingFailureState();
       }
     }
 
+function showLoadingFailureState() {
+      document.getElementById('loading-normal-content').style.display = 'none';
+      document.getElementById('loading-failure-content').style.display = 'block';
+      // এখানে ইচ্ছাকৃতভাবে hideLoadingOverlay() কল করা হচ্ছে না,
+      // যাতে ওভারলে দৃশ্যমান থেকে যায় এবং ব্যবহারকারী মেইন পেজে ঢুকতে না পারে
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const retryBtn = document.getElementById('loading-retry-btn');
+      if (retryBtn) {
+        retryBtn.addEventListener('click', function() {
+          loadInitialData();
+        });
+      }
+    });
+    
     function showSubjectPage(subject, fromTable = false) {
       currentSubject = subject;
       mainScrollPosition = window.scrollY; // Save main page scroll position
@@ -9574,7 +9649,7 @@ function recreatePlayer() {
         try {
             player = new YT.Player('player', {
                 height: '100%', width: '100%', videoId: videoId,
-                playerVars: { autoplay: 1, controls: 0, modestbranding: 1, rel: 0, iv_load_policy: 3, disablekb: 1, fs: 0, playsinline: 1 },
+                playerVars: { autoplay: 1, controls: 0, modestbranding: 1, rel: 0, iv_load_policy: 3, cc_load_policy: 0, disablekb: 1, fs: 0, playsinline: 1 },
                 events: { onReady: onPlayerReady, onStateChange: onPlayerStateChange, onError: onPlayerError }
             });
         } catch(e) { console.error('Failed to recreate player:', e); showNotification('ভিডিও রিলোড করতে সমস্যা হয়েছে', true); isReloading = false; }
@@ -9671,13 +9746,14 @@ function initYouTubePlayer() {
 function createPlayer() {
     player = new YT.Player('player', {
         height: '100%', width: '100%', videoId: videoId,
-        playerVars: { autoplay: 1, controls: 0, modestbranding: 1, rel: 0, iv_load_policy: 3, disablekb: 1, fs: 0, playsinline: 1 },
+        playerVars: { autoplay: 1, controls: 0, modestbranding: 1, rel: 0, iv_load_policy: 3, cc_load_policy: 0, disablekb: 1, fs: 0, playsinline: 1 },
         events: { onReady: onPlayerReady, onStateChange: onPlayerStateChange, onError: onPlayerError }
     });
 }
 
 function onPlayerReady(event) {
     videoLoaded = true; isPlayerReady = true; isReloading = false;
+    try { event.target.unloadModule('captions'); } catch(e) {}
     clearTimeout(videoLoadingTimeout); videoLoadingTimeout = null;
    vlrComplete(); loadingDiv.classList.remove('error-state'); loadingDiv.classList.add('hidden');
     applySpeed(); updateMainButton();
@@ -9735,6 +9811,7 @@ function onPlayerReady(event) {
 function onPlayerStateChange(event) {
     if (videoLoaded && isPlayerReady) {
         const isPlaying = event.data === YT.PlayerState.PLAYING;
+        if (isPlaying) { try { player.unloadModule('captions'); } catch(e) {} }
         if (isPlaying || event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.ENDED) { updateMainButton(); updateFsPlayIcon(isPlaying); }
         if (isPortraitMode) resetFsHideTimer();
 
@@ -9883,7 +9960,7 @@ document.addEventListener('DOMContentLoaded', function() {
     noteEditToggle.onclick = function(e) { e.stopPropagation(); if (isNoteEditing) exitEditMode(false); else enterEditMode(); };
     noteSaveBtn.onclick = function(e) { e.stopPropagation(); exitEditMode(true); };
     noteCancelBtn.onclick = function(e) { e.stopPropagation(); exitEditMode(false); };
-    noteDeleteBtn.onclick = function(e) { e.stopPropagation(); deleteNote(); };
+    noteDeleteBtn.onclick = function(e) { e.stopPropagation(); clearNoteTextarea(); };
     noteTextarea.addEventListener('input', function() { this.style.height = 'auto'; this.style.height = Math.min(this.scrollHeight, 220) + 'px'; });
     noteTextarea.addEventListener('keydown', function(e) { if (e.key === 'Escape' && isNoteEditing) { exitEditMode(false); e.preventDefault(); } if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && isNoteEditing) { exitEditMode(true); e.preventDefault(); } });
 
@@ -9904,6 +9981,12 @@ window.addEventListener('beforeunload', function() {
     if (videoLoadingTimeout) clearTimeout(videoLoadingTimeout);
     if (fsHideTimeout) clearTimeout(fsHideTimeout);
 });
+
+function clearNoteTextarea() {
+    noteTextarea.value = '';
+    noteTextarea.style.height = 'auto';
+    noteTextarea.focus();
+}
 console.log('✅ New Video Player with fullscreen controls, note system, and speed control loaded.');
 
     // Drive Player Functions
@@ -9931,6 +10014,7 @@ console.log('✅ New Video Player with fullscreen controls, note system, and spe
       // Push state to history for back button navigation
       history.pushState({ page: 'drive', url: url, trackId: trackId, type: type }, '');
       currentPageState = 'drive';
+      
       
       // Always start from top when opening drive player
       window.scrollTo(0, 0);
@@ -10191,6 +10275,7 @@ $('#search-documents').addEventListener('input', () => {
           }
           
           hideLoadingOverlay();
+          playTune('classLoadSuccess');
           showNotification("ডেটা রিফ্রেশ হয়েছে!");
         } else {
           hideLoadingOverlay();
@@ -11941,7 +12026,6 @@ setTimeout(rebindFolderAndSubjectListeners, 300);
     // ডেটা পাওয়া গেছে কিনা চেক করুন
     const hasData = computeCounts();
     if (!hasData) {
-      console.log('⏳ ডেটা এখনও লোড হয়নি');
       return;
     }
 
@@ -13131,17 +13215,18 @@ body.fullscreen-active {
                 width: '100%',
                 videoId: 'live_stream',
                 playerVars: {
-                    autoplay: 1,
-                    controls: 0,
-                    modestbranding: 1,
-                    rel: 0,
-                    iv_load_policy: 3,
-                    disablekb: 1,
-                    fs: 0,
-                    playsinline: 1,
-                    channel: CHANNEL_ID,
-                    live: 1
-                },
+    autoplay: 1,
+    controls: 0,
+    modestbranding: 1,
+    rel: 0,
+    iv_load_policy: 3,
+    cc_load_policy: 0,
+    disablekb: 1,
+    fs: 0,
+    playsinline: 1,
+    channel: CHANNEL_ID,
+    live: 1
+},
                 events: {
                     onReady: onPlayerReady,
                     onStateChange: onPlayerStateChange,
@@ -13173,6 +13258,7 @@ body.fullscreen-active {
 
         function onPlayerReady(event) {
             if (videoLoadingTimeout) { clearTimeout(videoLoadingTimeout); videoLoadingTimeout = null; }
+            try { event.target.unloadModule('captions'); } catch(e) {}
             updateLiveButton('live', currentActiveCount);
             startHeartbeat();
 
@@ -13260,6 +13346,7 @@ body.fullscreen-active {
         function onPlayerStateChange(event) {
             if (event.data === YT.PlayerState.PLAYING) {
                 togglePlayBtn.textContent = 'Pause';
+                try { videoPlayer.unloadModule('captions'); } catch(e) {}
                 loadingDiv.classList.add('hidden');
                 startHeartbeat();
             } else if (event.data === YT.PlayerState.PAUSED) {
@@ -15064,9 +15151,79 @@ document.addEventListener('DOMContentLoaded', function() {
 })();
 </script>
 <script>
-window.addEventListener('error', function(e) {
-  alert('এরর ধরা পড়েছে:\n' + e.message + '\nলাইন: ' + e.lineno);
-});
+(function() {
+  'use strict';
+  const TUNE_URLS = {
+    classLoadSuccess: 'class-load-success.mp3',
+    classLoadError: 'class-load-error.mp3',
+    loginSuccess: 'login-success.mp3',
+    loginError: 'login-error.mp3',
+    success: 'success.mp3',
+    loadSuccess: 'load-success.mp3',
+    error: 'error.mp3'
+  };
+  const CACHE_PREFIX = 'bomTuneCache_';
+  const audioCache = {};
+
+  function loadFromCache(key) {
+    try { return localStorage.getItem(CACHE_PREFIX + key); } catch(e) { return null; }
+  }
+  function saveToCache(key, dataUrl) {
+    try { localStorage.setItem(CACHE_PREFIX + key, dataUrl); } catch(e) {}
+  }
+  function prepareTune(name) {
+    const url = TUNE_URLS[name];
+    if (!url) return;
+    const cached = loadFromCache(name);
+    if (cached) { audioCache[name] = cached; return; }
+    fetch(url).then(res => res.blob()).then(blob => {
+      const reader = new FileReader();
+      reader.onloadend = function() {
+        audioCache[name] = reader.result;
+        saveToCache(name, reader.result);
+      };
+      reader.readAsDataURL(blob);
+    }).catch(function(){});
+  }
+  Object.keys(TUNE_URLS).forEach(prepareTune);
+
+  window.playTune = function(name) {
+    try {
+      const src = audioCache[name] || TUNE_URLS[name];
+      const audio = new Audio(src);
+      audio.play().catch(function(){});
+    } catch(e) {}
+  };
+
+  // ---- স্বয়ংক্রিয় ওয়াচার: নির্দিষ্ট এলিমেন্ট দেখা দিলেই টিউন বাজবে ----
+  function watchAndPlay(elementId, tuneName, checkFn) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    const observer = new MutationObserver(function() {
+      if (checkFn(el)) playTune(tuneName);
+    });
+    observer.observe(el, { attributes: true, attributeFilter: ['class', 'style'] });
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // লগইন/রেজিস্ট্রেশন এরর
+    watchAndPlay('register-error', 'loginError', el => el.classList.contains('show'));
+    watchAndPlay('login-error', 'loginError', el => el.classList.contains('show'));
+    watchAndPlay('admin-error', 'loginError', el => el.classList.contains('show'));
+
+    // লগইন/রেজিস্ট্রেশন সাকসেস
+    watchAndPlay('id-success-screen', 'loginSuccess', el => el.classList.contains('active'));
+    watchAndPlay('login-success-screen', 'loginSuccess', el => el.style.display === 'block');
+    watchAndPlay('admin-login-success-screen', 'loginSuccess', el => el.style.display === 'block');
+
+    // রিপ্লাই মডেল
+    watchAndPlay('bomanswer-overlay', 'success', el => el.classList.contains('active'));
+
+    // ক্লাস লোড ব্যর্থতা (লোডিং পেজ ও ব্যানার দুটোই)
+    watchAndPlay('loading-failure-content', 'classLoadError', el => el.style.display === 'block');
+    watchAndPlay('dataLoadFailedBanner', 'classLoadError', el => el.classList.contains('show'));
+  });
+})();
 </script>
 </body>
 </html>
