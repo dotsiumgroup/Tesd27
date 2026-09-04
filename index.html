@@ -6339,13 +6339,16 @@ function bomBuildHubRedirectUrl() {
         const result = await bomApiGet({ action: 'loadDashboard', studentId: studentId });
         if (!result.ok) {
           contentEl.innerHTML = bomDashboardErrorHtml('তথ্য লোড করা যায়নি।');
+          playTune('error');
           bomBindDashRetry();
           return;
         }
         window._bomDashData = result;
         renderBomDashboard(result);
+        playTune('loadSuccess');
       } catch (e) {
         contentEl.innerHTML = bomDashboardErrorHtml('নেটওয়ার্ক সমস্যা হয়েছে। ইন্টারনেট সংযোগ পরীক্ষা করুন।');
+        playTune('error');
         bomBindDashRetry();
       }
     }
@@ -6642,10 +6645,12 @@ async function bomDownloadIdPdf() {
     document.body.removeChild(link);
     setTimeout(() => URL.revokeObjectURL(url), 10000);
 
-    showNotification('আইডি কার্ড ডাউনলোড শুরু হয়েছে!', false);
+    showNotification('আইডি কার্ড ডাউনলোড শুরু হয়েছে!', false);
+    playTune('loadSuccess');
   } catch (err) {
     console.error('PDF ডাউনলোড ত্রুটি:', err);
     showNotification('PDF তৈরি করতে ব্যর্থ হয়েছে। আবার চেষ্টা করুন।', true);
+    playTune('error');
   } finally {
     btn.disabled = false;
     btn.textContent = 'PDF Download';
@@ -6691,10 +6696,11 @@ async function bomDownloadIdPng() {
       setTimeout(() => URL.revokeObjectURL(url), 10000);
       showNotification('আইডি কার্ড ডাউনলোড শুরু হয়েছে!', false);
     }, 'image/png', 1.0);
-
+playTune('loadSuccess');
   } catch (err) {
     console.error('PNG ডাউনলোড ত্রুটি:', err);
     showNotification('Image তৈরি করতে ব্যর্থ হয়েছে। আবার চেষ্টা করুন।', true);
+    playTune('error');
   } finally {
     btn.disabled = false;
     btn.textContent = 'Image Download';
@@ -7182,11 +7188,13 @@ async function bomDownloadIdPng() {
 
       if (result.ok) {
         showNotification('বার্তা পাঠানো হয়েছে!', false);
+        playTune('success');
         if (result.row) bomAddPendingCheck(result.row);
         document.getElementById('bomcontact-message').value = '';
         bomLoadMyComments();
       } else {
         showNotification('বার্তা পাঠাতে সমস্যা হয়েছে।', true);
+        playTune('error');
       }
     });
 
@@ -7352,6 +7360,10 @@ async function bomDownloadIdPng() {
       listEl.innerHTML = '<p class="bangla-font" style="text-align:center;color:#636e72;padding:20px;">লোড হচ্ছে...</p>';
       const result = await bomApiGet({ action: 'getAllClasses' });
       bomAllClassesCache = result.ok ? result.rows : [];
+      if (!window._bomClassControlFirstLoadDone) {
+        window._bomClassControlFirstLoadDone = true;
+        playTune(result.ok ? 'loadSuccess' : 'error');
+      }
       bomRenderClassStats();
       bomRenderClassList(bomAllClassesCache);
     }
@@ -7518,10 +7530,12 @@ async function bomDownloadIdPng() {
 
       if (result.ok) {
         showNotification(bomEditingClassRow ? 'আপডেট সফল!' : 'নতুন তথ্য যুক্ত হয়েছে!', false);
+        playTune('success');
         document.getElementById('bomcc-form-overlay').classList.remove('active');
         bomLoadClassControlData();
       } else {
         showNotification('ব্যর্থ হয়েছে।', true);
+        playTune('error');
       }
     });
 
@@ -7570,6 +7584,10 @@ async function bomDownloadIdPng() {
       listEl.innerHTML = '<p class="bangla-font" style="text-align:center;color:#636e72;padding:20px;">লোড হচ্ছে...</p>';
       const result = await bomApiGet({ action: 'getAllStudentsForAdmin' });
       bomAllStudentsFullCache = result.ok ? result.students : [];
+      if (!window._bomStudentControlFirstLoadDone) {
+        window._bomStudentControlFirstLoadDone = true;
+        playTune(result.ok ? 'loadSuccess' : 'error');
+      }
       bomRenderStudentStats();
       bomRenderStudentList(bomAllStudentsFullCache);
     }
@@ -7670,6 +7688,10 @@ async function bomDownloadIdPng() {
       listEl.innerHTML = '<p class="bangla-font" style="text-align:center;color:#636e72;padding:20px;">লোড হচ্ছে...</p>';
       const result = await bomApiGet({ action: 'getAllComments' });
       bomAllCommentsFullCache = result.ok ? result.comments : [];
+      if (!window._bomCommentControlFirstLoadDone) {
+        window._bomCommentControlFirstLoadDone = true;
+        playTune(result.ok ? 'loadSuccess' : 'error');
+      }
       bomRenderCommentStats();
       bomRenderCommentList(bomAllCommentsFullCache);
     }
@@ -9757,6 +9779,7 @@ function onPlayerReady(event) {
     clearTimeout(videoLoadingTimeout); videoLoadingTimeout = null;
    vlrComplete(); loadingDiv.classList.remove('error-state'); loadingDiv.classList.add('hidden');
     applySpeed(); updateMainButton();
+    playTune('loadSuccess');
 
     // ---- Panel Controls ----
     panelTogglePlay.onclick = function() {
@@ -9830,7 +9853,7 @@ function onPlayerStateChange(event) {
 }
 function onPlayerError(e) {
     console.error('YouTube error', e.data);
-    if (!videoLoaded) { loadingDiv.classList.add('error-state'); loadingDiv.classList.remove('hidden'); loadingText.innerHTML = `<span class="error-icon">⚠️</span><br>ভিডিও লোড করা সম্ভব হচ্ছে না!<br>নেটওয়ার্ক সংযোগ পরীক্ষা করুন অথবা রিফ্রেশ বাটনে চাপ দিন।`; updateMainButton(); }
+    if (!videoLoaded) { loadingDiv.classList.add('error-state'); loadingDiv.classList.remove('hidden'); loadingText.innerHTML = `<span class="error-icon">⚠️</span><br>ভিডিও লোড করা সম্ভব হচ্ছে না!<br>নেটওয়ার্ক সংযোগ পরীক্ষা করুন অথবা রিফ্রেশ বাটনে চাপ দিন।`; updateMainButton(); playTune('error'); }
     else { showNotification('ভিডিও প্লেব্যাকে সমস্যা হয়েছে', true); }
 }
 
