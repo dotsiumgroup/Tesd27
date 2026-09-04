@@ -5475,10 +5475,6 @@ body.fullscreen-active { overflow: hidden !important; touch-action: none !import
       </button>
       <div class="filter-bar">
         <input id="search-classes" type="search" placeholder="🔍 সার্চ...">
-        <select id="sort-classes-page">
-          <option value="desc" class="bangla-font">নতুন থেকে পুরানো</option>
-          <option value="asc" class="bangla-font">পুরানো থেকে নতুন</option>
-        </select>
       </div>
     </nav>
   </header>
@@ -5530,10 +5526,6 @@ body.fullscreen-active { overflow: hidden !important; touch-action: none !import
       </button>
       <div class="filter-bar">
         <input id="search-missions" type="search" placeholder="🔍 সার্চ...">
-        <select id="sort-missions-page">
-          <option value="desc" class="bangla-font">নতুন থেকে পুরানো</option>
-          <option value="asc" class="bangla-font">পুরানো থেকে নতুন</option>
-        </select>
       </div>
     </nav>
   </header>
@@ -5585,10 +5577,6 @@ body.fullscreen-active { overflow: hidden !important; touch-action: none !import
       </button>
       <div class="filter-bar">
         <input id="search-documents" type="search" placeholder="🔍 সার্চ...">
-        <select id="sort-documents-page">
-          <option value="desc" class="bangla-font">নতুন থেকে পুরানো</option>
-          <option value="asc" class="bangla-font">পুরানো থেকে নতুন</option>
-        </select>
       </div>
     </nav>
   </header>
@@ -6561,9 +6549,11 @@ function bomBuildHubRedirectUrl() {
         if (result.ok) {
           document.getElementById('bomdash-pw-overlay').classList.remove('active');
           showNotification('পাসওয়ার্ড সফলভাবে সংরক্ষণ করা হয়েছে!', false);
+          playTune('success');
           showDashboardBom();
         } else {
           errEl.textContent = 'বর্তমান পাসওয়ার্ড ভুল হয়েছে।'; errEl.style.display = 'block';
+          playTune('error');
         }
       });
 
@@ -6756,16 +6746,18 @@ playTune('loadSuccess');
       listEl.querySelectorAll('.approve').forEach(btn => {
         btn.addEventListener('click', async function() {
           this.disabled = true; this.textContent = 'প্রসেসিং...';
-          await bomApiPost({ action: 'approveStudent', studentId: this.getAttribute('data-id') });
+          const result = await bomApiPost({ action: 'approveStudent', studentId: this.getAttribute('data-id') });
           showNotification('অনুমোদন দেওয়া হয়েছে!', false);
+          playTune(result && result.ok !== false ? 'success' : 'error');
           bomOpenApprovalPanel();
         });
       });
       listEl.querySelectorAll('.block').forEach(btn => {
         btn.addEventListener('click', async function() {
           this.disabled = true; this.textContent = 'প্রসেসিং...';
-          await bomApiPost({ action: 'blockStudent', studentId: this.getAttribute('data-id') });
+          const result = await bomApiPost({ action: 'blockStudent', studentId: this.getAttribute('data-id') });
           showNotification('ব্লক করা হয়েছে!', false);
+          playTune(result && result.ok !== false ? 'success' : 'error');
           bomOpenApprovalPanel();
         });
       });
@@ -6810,8 +6802,9 @@ playTune('loadSuccess');
           const id = this.getAttribute('data-id');
           this.disabled = true;
           const actionMap = { approve: 'approveStudent', block: 'blockStudent', restore: 'restoreStudent', limit: 'increaseLoginLimit' };
-          await bomApiPost({ action: actionMap[act], studentId: id });
+          const result = await bomApiPost({ action: actionMap[act], studentId: id });
           showNotification('আপডেট সম্পন্ন হয়েছে!', false);
+          playTune(result && result.ok !== false ? 'success' : 'error');
           bomOpenAllStudentsPanel();
         });
       });
@@ -6848,20 +6841,22 @@ playTune('loadSuccess');
       if (!window._bomSettingsCache) return;
       const newValue = !window._bomSettingsCache.autoAccess;
       this.disabled = true; this.textContent = 'প্রসেসিং...';
-      await bomApiPost({ action: 'updateSettings', key: 'AutoAccess', value: newValue ? 'TRUE' : 'FALSE' });
+      const result = await bomApiPost({ action: 'updateSettings', key: 'AutoAccess', value: newValue ? 'TRUE' : 'FALSE' });
       window._bomSettingsCache.autoAccess = newValue;
       document.getElementById('bomadmin-autoaccess-status').textContent = newValue ? '✅ চালু আছে' : '❌ বন্ধ আছে';
       this.disabled = false; this.textContent = 'পরিবর্তন করুন';
       showNotification('সেটিংস আপডেট হয়েছে!', false);
+      playTune(result && result.ok !== false ? 'success' : 'error');
     });
 
     document.getElementById('bomadmin-maxlogin-save').addEventListener('click', async function() {
       const val = parseInt(document.getElementById('bomadmin-maxlogin-input').value);
       if (!val || val < 1) { showNotification('সঠিক সংখ্যা দিন।', true); return; }
       this.disabled = true; this.textContent = 'প্রসেসিং...';
-      await bomApiPost({ action: 'updateSettings', key: 'MaxLoginLimit', value: val });
+      const result = await bomApiPost({ action: 'updateSettings', key: 'MaxLoginLimit', value: val });
       this.disabled = false; this.textContent = 'সংরক্ষণ করুন';
       showNotification('সর্বোচ্চ লগইন সীমা আপডেট হয়েছে!', false);
+      playTune(result && result.ok !== false ? 'success' : 'error');
     });
 
     // ===== ক্লাস/মিশন/ডকুমেন্ট অ্যাক্সেস চেক =====
@@ -7049,12 +7044,15 @@ playTune('loadSuccess');
       this.disabled = false; this.textContent = 'যুক্ত করুন';
       if (result.ok) {
         showNotification('ফোল্ডার তৈরি হয়েছে!', false);
+        playTune('success');
         document.getElementById('bomfolder-create-overlay').classList.remove('active');
         bomLoadFolders();
       } else if (result.error === 'duplicate') {
         showNotification('এই নামে ফোল্ডার আগে থেকেই আছে।', true);
+        playTune('error');
       } else {
         showNotification('ফোল্ডার তৈরি করতে সমস্যা হয়েছে।', true);
+        playTune('error');
       }
     });
 
@@ -7074,9 +7072,10 @@ playTune('loadSuccess');
       const newName = document.getElementById('bomfolder-edit-name').value.trim();
       if (!newName || !bomCurrentEditFolder) return;
       this.disabled = true;
-      await bomApiPost({ action: 'editFolder', row: bomCurrentEditFolder.row, newName: newName });
+      const result = await bomApiPost({ action: 'editFolder', row: bomCurrentEditFolder.row, newName: newName });
       this.disabled = false;
       showNotification('নাম পরিবর্তন করা হয়েছে!', false);
+      playTune(result && result.ok !== false ? 'success' : 'error');
       document.getElementById('bomfolder-manage-overlay').classList.remove('active');
       bomLoadFolders();
     });
@@ -7084,9 +7083,10 @@ playTune('loadSuccess');
     document.getElementById('bomfolder-hide-btn').addEventListener('click', async function() {
       if (!bomCurrentEditFolder) return;
       this.disabled = true;
-      await bomApiPost({ action: 'hideFolder', row: bomCurrentEditFolder.row });
+      const result = await bomApiPost({ action: 'hideFolder', row: bomCurrentEditFolder.row });
       this.disabled = false;
       showNotification('স্ট্যাটাস পরিবর্তন করা হয়েছে!', false);
+      playTune(result && result.ok !== false ? 'success' : 'error');
       document.getElementById('bomfolder-manage-overlay').classList.remove('active');
       bomLoadFolders();
     });
@@ -7095,9 +7095,10 @@ playTune('loadSuccess');
       if (!bomCurrentEditFolder) return;
       if (!confirm('আপনি কি নিশ্চিত এই ফোল্ডারটি ডিলিট করতে চান?')) return;
       this.disabled = true;
-      await bomApiPost({ action: 'deleteFolder', row: bomCurrentEditFolder.row });
+      const result = await bomApiPost({ action: 'deleteFolder', row: bomCurrentEditFolder.row });
       this.disabled = false;
       showNotification('ফোল্ডার ডিলিট করা হয়েছে!', false);
+      playTune(result && result.ok !== false ? 'success' : 'error');
       document.getElementById('bomfolder-manage-overlay').classList.remove('active');
       bomLoadFolders();
     });
@@ -7127,20 +7128,22 @@ playTune('loadSuccess');
       if (!window._bomSettingsCache) return;
       const newValue = !window._bomSettingsCache.autoAccess;
       this.disabled = true; this.textContent = 'প্রসেসিং...';
-      await bomApiPost({ action: 'updateSettings', key: 'AutoAccess', value: newValue ? 'TRUE' : 'FALSE' });
+      const result = await bomApiPost({ action: 'updateSettings', key: 'AutoAccess', value: newValue ? 'TRUE' : 'FALSE' });
       window._bomSettingsCache.autoAccess = newValue;
       document.getElementById('bomadmin-autoaccess-status').textContent = newValue ? '✅ চালু আছে' : '❌ বন্ধ আছে';
       this.disabled = false; this.textContent = 'পরিবর্তন করুন';
       showNotification('সেটিংস আপডেট হয়েছে!', false);
+      playTune(result && result.ok !== false ? 'success' : 'error');
     });
 
     document.getElementById('bomadmin-maxlogin-save').addEventListener('click', async function() {
       const val = parseInt(document.getElementById('bomadmin-maxlogin-input').value);
       if (!val || val < 1) { showNotification('সঠিক সংখ্যা দিন।', true); return; }
       this.disabled = true; this.textContent = 'প্রসেসিং...';
-      await bomApiPost({ action: 'updateSettings', key: 'MaxLoginLimit', value: val });
+      const result = await bomApiPost({ action: 'updateSettings', key: 'MaxLoginLimit', value: val });
       this.disabled = false; this.textContent = 'সংরক্ষণ করুন';
       showNotification('সর্বোচ্চ লগইন সীমা আপডেট হয়েছে!', false);
+      playTune(result && result.ok !== false ? 'success' : 'error');
     });
     
     // ===== যোগাযোগ (Contact) পেজ =====
@@ -7540,15 +7543,27 @@ playTune('loadSuccess');
     });
 
     window.bomToggleHideClass = async function(row) {
-      await bomApiPost({ action: 'hideClassRow', row: row });
-      showNotification('স্ট্যাটাস পরিবর্তন হয়েছে!', false);
+      const result = await bomApiPost({ action: 'hideClassRow', row: row });
+      if (result && result.ok !== false) {
+        showNotification('স্ট্যাটাস পরিবর্তন হয়েছে!', false);
+        playTune('success');
+      } else {
+        showNotification('ব্যর্থ হয়েছে।', true);
+        playTune('error');
+      }
       bomLoadClassControlData();
     };
 
     window.bomDeleteClassItem = async function(row) {
       if (!confirm('আপনি কি নিশ্চিত এটি ডিলিট করতে চান?')) return;
-      await bomApiPost({ action: 'deleteClassRow', row: row });
-      showNotification('ডিলিট করা হয়েছে!', false);
+      const result = await bomApiPost({ action: 'deleteClassRow', row: row });
+      if (result && result.ok !== false) {
+        showNotification('ডিলিট করা হয়েছে!', false);
+        playTune('success');
+      } else {
+        showNotification('ব্যর্থ হয়েছে।', true);
+        playTune('error');
+      }
       bomLoadClassControlData();
     };
     // ===== স্টুডেন্ট কন্ট্রোল পেজ =====
@@ -7653,8 +7668,14 @@ playTune('loadSuccess');
     }
 
     window.bomStudentAction = async function(action, studentId) {
-      await bomApiPost({ action: action, studentId: studentId });
-      showNotification('আপডেট সম্পন্ন হয়েছে!', false);
+      const result = await bomApiPost({ action: action, studentId: studentId });
+      if (result && result.ok !== false) {
+        showNotification('আপডেট সম্পন্ন হয়েছে!', false);
+        playTune('success');
+      } else {
+        showNotification('ব্যর্থ হয়েছে।', true);
+        playTune('error');
+      }
       bomLoadStudentControlData();
     };
 
@@ -7816,10 +7837,12 @@ playTune('loadSuccess');
 
       if (result.ok) {
         showNotification('আপডেট সফল হয়েছে!', false);
+        playTune('success');
         document.getElementById('bomcmtc-action-overlay').classList.remove('active');
         bomLoadCommentControlData();
       } else {
         showNotification('ব্যর্থ হয়েছে।', true);
+        playTune('error');
       }
     }
     
@@ -8724,10 +8747,64 @@ if (specialFolders.includes(r.subject)) {
       const today = getTodayDate();
       return classes.filter(cls => cls && cls.date === today);
     }
+    
+    // ===== বাংলা-ইংরেজি ফোনেটিক সার্চ সাপোর্ট =====
+    const BN_CONSONANTS_MAP = {
+      'ক':'k','খ':'kh','গ':'g','ঘ':'gh','ঙ':'ng',
+      'চ':'ch','ছ':'ch','জ':'j','ঝ':'jh','ঞ':'ny',
+      'ট':'t','ঠ':'th','ড':'d','ঢ':'dh','ণ':'n',
+      'ত':'t','থ':'th','দ':'d','ধ':'dh','ন':'n',
+      'প':'p','ফ':'ph','ব':'b','ভ':'bh','ম':'m',
+      'য':'j','র':'r','ল':'l','শ':'sh','ষ':'sh',
+      'স':'s','হ':'h','ড়':'r','ঢ়':'rh','য়':'y','ৎ':'t'
+    };
+    const BN_VOWELS_INDEP_MAP = {
+      'অ':'o','আ':'a','ই':'i','ঈ':'i','উ':'u','ঊ':'u',
+      'এ':'e','ঐ':'oi','ও':'o','ঔ':'ou','ঋ':'ri'
+    };
+    const BN_VOWEL_SIGNS_MAP = {
+      'া':'a','ি':'i','ী':'i','ু':'u','ূ':'u','ৃ':'ri',
+      'ে':'e','ৈ':'oi','ো':'o','ৌ':'ou'
+    };
+    const BN_NASAL_MAP = { 'ং':'ng','ঃ':'','ঁ':'' };
+    const BN_HASANTA_CHAR = '্';
+
+    function transliterateBengali(str) {
+      if (!str) return '';
+      let out = '';
+      const chars = Array.from(str);
+      for (let i = 0; i < chars.length; i++) {
+        const ch = chars[i];
+        const next = chars[i + 1];
+        if (BN_CONSONANTS_MAP[ch]) {
+          out += BN_CONSONANTS_MAP[ch];
+          if (next === BN_HASANTA_CHAR) { i++; }
+          else if (BN_VOWEL_SIGNS_MAP[next]) { out += BN_VOWEL_SIGNS_MAP[next]; i++; }
+          else { out += 'o'; }
+        } else if (BN_VOWELS_INDEP_MAP[ch]) {
+          out += BN_VOWELS_INDEP_MAP[ch];
+        } else if (BN_NASAL_MAP[ch] !== undefined) {
+          out += BN_NASAL_MAP[ch];
+        } else if (/[a-zA-Z0-9]/.test(ch)) {
+          out += ch.toLowerCase();
+        } else if (/\s/.test(ch)) {
+          out += ' ';
+        }
+      }
+      return out;
+    }
+
+    function normalizeForSearch(str) {
+      if (!str) return '';
+      if (/[\u0980-\u09FF]/.test(str)) {
+        return transliterateBengali(str).toLowerCase();
+      }
+      return str.toString().toLowerCase();
+    }
 
     function similarity(s1, s2) {
-      s1 = s1.toLowerCase();
-      s2 = s2.toLowerCase();
+      s1 = normalizeForSearch(s1);
+      s2 = normalizeForSearch(s2);
       const m = s1.length;
       const n = s2.length;
       const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
@@ -9265,6 +9342,7 @@ function showLoadingFailureState() {
       const retryBtn = document.getElementById('loading-retry-btn');
       if (retryBtn) {
         retryBtn.addEventListener('click', function() {
+          if (typeof stopTune === 'function') stopTune('classLoadError');
           loadInitialData();
         });
       }
@@ -9340,11 +9418,12 @@ function renderClassesPage() {
     subject.includes('(ক্লাস)')
   );
   
-  classSubjects.forEach(subject => {
+  classSubjects.forEach((subject, index) => {
     const pill = document.createElement('a');
     pill.className = 'pill subject-link-class';
     pill.href = '#';
     pill.setAttribute('data-name', subject);
+    pill.setAttribute('data-order', index);
     pill.innerHTML = `
       <span>
         <span class="bangla-font">${subject}</span>
@@ -9371,11 +9450,12 @@ function renderMissionsPage() {
     subject.includes('(মিশন)')
   );
   
-  missionSubjects.forEach(subject => {
+  missionSubjects.forEach((subject, index) => {
     const pill = document.createElement('a');
     pill.className = 'pill subject-link-mission';
     pill.href = '#';
     pill.setAttribute('data-name', subject);
+    pill.setAttribute('data-order', index);
     pill.innerHTML = `
       <span> 
         <span class="bangla-font">${subject}</span>
@@ -9402,11 +9482,12 @@ function renderDocumentsPage() {
     subject.includes('(ডকুমেন্ট)')
   );
   
-  documentSubjects.forEach(subject => {
+  documentSubjects.forEach((subject, index) => {
     const pill = document.createElement('a');
     pill.className = 'pill subject-link-document';
     pill.href = '#';
     pill.setAttribute('data-name', subject);
+    pill.setAttribute('data-order', index);
     pill.innerHTML = `
       <span> 
         <span class="bangla-font">${subject}</span>
@@ -10067,12 +10148,15 @@ console.log('✅ New Video Player with fullscreen controls, note system, and spe
         if (loader) {
           loader.innerHTML = "সম্ভবত নেটওয়ার্ক জনিত সমস্যা হচ্ছে! দয়া করে অপেক্ষা করুন অথবা পুনরায় চেষ্টা করুন..";
         }
+        if (typeof playTune === 'function') playTune('error');
       }, 20000); // 20 seconds
 
       // When iframe loads, hide loader
       viewer.onload = () => {
         clearTimeout(driveLoadingTimeout);
         document.querySelector('#drive-player-page .loader').style.display = "none";
+        if (typeof stopTune === 'function') stopTune('error');
+        if (typeof playTune === 'function') playTune('loadSuccess');
         trackItem(driveTrackId, driveType);
       };
 
@@ -10157,39 +10241,34 @@ console.log('✅ New Video Player with fullscreen controls, note system, and spe
         });
       });
 
-      $('#search').addEventListener('input', () => {
-        const searchTerm = $('#search').value.trim().toLowerCase();
+      function bomRenderSubjectSearch() {
+        const searchTerm = $('#search').value.trim();
         const classes = filterClassesByTimeRange('all');
         const groupedClasses = groupClassesBySubject(classes);
         const subjectClasses = groupedClasses[currentSubject] || [];
-        const filteredClasses = subjectClasses.filter(cls => cls.title.toLowerCase().includes(searchTerm));
-        
         const sortOrder = $('#sort').value;
-        if (sortOrder === 'asc') {
-          filteredClasses.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-        } else {
-          filteredClasses.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-        }
-        
-        renderCards(filteredClasses, $('#classGrid'));
-      });
+        let list = subjectClasses.slice();
 
-      $('#sort').addEventListener('change', () => {
-        const searchTerm = $('#search').value.trim().toLowerCase();
-        const classes = filterClassesByTimeRange('all');
-        const groupedClasses = groupClassesBySubject(classes);
-        const subjectClasses = groupedClasses[currentSubject] || [];
-        const filteredClasses = subjectClasses.filter(cls => cls.title.toLowerCase().includes(searchTerm));
-        
-        const sortOrder = $('#sort').value;
-        if (sortOrder === 'asc') {
-          filteredClasses.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+        if (searchTerm) {
+          list = list.map(cls => ({ ...cls, _sim: maxWordSimilarity(searchTerm, cls.title) }));
+          list.sort((a, b) => {
+            const diff = b._sim - a._sim;
+            if (diff !== 0) return diff;
+            return sortOrder === 'asc'
+              ? new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+              : new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+          });
         } else {
-          filteredClasses.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+          list.sort((a, b) => sortOrder === 'asc'
+            ? new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+            : new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
         }
-        
-        renderCards(filteredClasses, $('#classGrid'));
-      });
+
+        renderCards(list, $('#classGrid'));
+      }
+
+      $('#search').addEventListener('input', bomRenderSubjectSearch);
+      $('#sort').addEventListener('change', bomRenderSubjectSearch);
 
     // নতুন পেজগুলোর জন্য back button ইভেন্ট লিসেনার
 $('#back-to-main-from-classes').addEventListener('click', (e) => {
@@ -10230,46 +10309,38 @@ $('#documents-folder').addEventListener('click', (e) => {
 });
 
 // নতুন পেজগুলোর সার্চ ফাংশন
+function bomReorderPillsBySearch(containerSelector, pillSelector, searchTerm) {
+  const container = document.querySelector(containerSelector);
+  if (!container) return;
+  const pills = Array.from(container.querySelectorAll(pillSelector));
+
+  if (!searchTerm) {
+    pills.sort((a, b) => (parseInt(a.dataset.order) || 0) - (parseInt(b.dataset.order) || 0));
+  } else {
+    pills.forEach(p => {
+      const name = p.getAttribute('data-name') || '';
+      p.dataset.score = maxWordSimilarity(searchTerm, name);
+    });
+    pills.sort((a, b) => {
+      const diff = parseFloat(b.dataset.score) - parseFloat(a.dataset.score);
+      if (diff !== 0) return diff;
+      return (parseInt(a.dataset.order) || 0) - (parseInt(b.dataset.order) || 0);
+    });
+  }
+
+  pills.forEach(p => { p.style.display = 'flex'; container.appendChild(p); });
+}
+
 $('#search-classes').addEventListener('input', () => {
-  const searchTerm = $('#search-classes').value.trim().toLowerCase();
-  const pills = $all('.subject-link-class');
-  
-  pills.forEach(pill => {
-    const subjectName = pill.getAttribute('data-name').toLowerCase();
-    if (subjectName.includes(searchTerm)) {
-      pill.style.display = 'flex';
-    } else {
-      pill.style.display = 'none';
-    }
-  });
+  bomReorderPillsBySearch('#classesGrid', '.subject-link-class', $('#search-classes').value.trim());
 });
 
 $('#search-missions').addEventListener('input', () => {
-  const searchTerm = $('#search-missions').value.trim().toLowerCase();
-  const pills = $all('.subject-link-mission');
-  
-  pills.forEach(pill => {
-    const subjectName = pill.getAttribute('data-name').toLowerCase();
-    if (subjectName.includes(searchTerm)) {
-      pill.style.display = 'flex';
-    } else {
-      pill.style.display = 'none';
-    }
-  });
+  bomReorderPillsBySearch('#missionsGrid', '.subject-link-mission', $('#search-missions').value.trim());
 });
 
 $('#search-documents').addEventListener('input', () => {
-  const searchTerm = $('#search-documents').value.trim().toLowerCase();
-  const pills = $all('.subject-link-document');
-  
-  pills.forEach(pill => {
-    const subjectName = pill.getAttribute('data-name').toLowerCase();
-    if (subjectName.includes(searchTerm)) {
-      pill.style.display = 'flex';
-    } else {
-      pill.style.display = 'none';
-    }
-  });
+  bomReorderPillsBySearch('#documentsGrid', '.subject-link-document', $('#search-documents').value.trim());
 });
 
       // Fix back button to return to main page
@@ -10285,6 +10356,7 @@ $('#search-documents').addEventListener('input', () => {
 
       // Refresh data button event listener
       $('#refresh-data-btn').addEventListener('click', async () => {
+        if (typeof stopTune === 'function') stopTune('classLoadError');
         showLoadingOverlay();
         updateLoadingProgress(10);
         const rows = await fetchData();
@@ -15210,11 +15282,27 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   Object.keys(TUNE_URLS).forEach(prepareTune);
 
+  const activeAudios = {};
+
   window.playTune = function(name) {
     try {
+      if (activeAudios[name]) {
+        activeAudios[name].pause();
+        activeAudios[name].currentTime = 0;
+      }
       const src = audioCache[name] || TUNE_URLS[name];
       const audio = new Audio(src);
+      activeAudios[name] = audio;
       audio.play().catch(function(){});
+    } catch(e) {}
+  };
+
+  window.stopTune = function(name) {
+    try {
+      if (activeAudios[name]) {
+        activeAudios[name].pause();
+        activeAudios[name].currentTime = 0;
+      }
     } catch(e) {}
   };
 
